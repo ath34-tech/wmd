@@ -4,6 +4,8 @@ All notable backend changes, newest first. API details live in [API_DOCS.md](API
 
 ## [Unreleased]
 
+`feature/backend-mvp` (tickets #2–#5) merged into `main` on 2026-09-20.
+
 ### Added — LLM Integration (Gemini) (#5)
 - `POST /api/meals/analyze` now sends the image to Gemini (`gemini-3.1-flash-lite`, `google-genai` SDK) with a strict system prompt and a JSON response schema, and returns the identified FoodItems and quantities instead of the mock.
 - The prompt lists the known FoodItems and their units from the DB, so Gemini reuses those names and counts in those units.

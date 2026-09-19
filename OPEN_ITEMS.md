@@ -6,7 +6,7 @@ Last updated: 2026-09-20 (after #5).
 
 ## Needs a decision
 
-- [ ] **Merge `feature/backend-mvp` into `main`.** Tickets from #3 on are merged into `feature/backend-mvp` only; `main` has just #2. Suggest merging after #6, when the MVP is complete.
+- [x] ~~**Merge `feature/backend-mvp` into `main`.**~~ Done 2026-09-20 after #5, at the user's request. #6 will follow the same path (branch off and merge into `feature/backend-mvp`, then `main`).
 - [ ] **Should endpoints require the MockAuth token?** `POST /api/auth/mock-login` issues `mock-token-wmd-mvp`, but no endpoint checks it. The spec allows either; decide before the frontend hard-codes behaviour. (#2)
 - [ ] **What to do with foods Gemini names that aren't in the DB.** #5 lets Gemini return generic names for unknown foods; #6 must decide whether to skip them, return them with `calories: null`, or fail. (#5 → #6)
 
