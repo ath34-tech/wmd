@@ -65,6 +65,30 @@ Once you have the backend running locally (e.g. `uvicorn app.main:app --reload`)
   ```
   (truncated; the seed set also includes Bread, Chicken Breast, Egg, Orange, Pizza, White Rice)
 
+### 5. Analyze Meal
+- **Path**: `POST /api/meals/analyze`
+- **Description**: Upload a photo of a Meal; returns the FoodItems identified in it with their quantities. **Currently returns a fixed mock result** (one Banana) while the Gemini integration is built; the response shape is the contract and will gain calorie fields later.
+- **Request**: `multipart/form-data` with one file field named `image`.
+  - Allowed types: `image/jpeg`, `image/png`, `image/webp`, `image/heic`, `image/heif`.
+  - Max size: 5 MB (configurable via the `MAX_UPLOAD_BYTES` env var).
+- **Example**:
+  ```bash
+  curl -X POST http://localhost:8000/api/meals/analyze \
+    -F "image=@lunch.jpg;type=image/jpeg"
+  ```
+- **Response** (`200 OK`):
+  ```json
+  {
+    "items": [
+      { "food_item": "Banana", "quantity": 1.0 }
+    ]
+  }
+  ```
+- **Errors**:
+  - `413` — image larger than the size limit.
+  - `415` — file is not one of the allowed image types.
+  - `422` — no `image` field in the form.
+
 ---
 
 ## Planned Endpoints (Architecture based on PRD)

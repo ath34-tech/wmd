@@ -38,3 +38,6 @@ env/
 .aws-sam/
 # Local SQLite database
 *.db
+
+# Uploaded meal images
+uploads/

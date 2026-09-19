@@ -4,6 +4,12 @@ All notable backend changes, newest first. API details live in [API_DOCS.md](API
 
 ## [Unreleased]
 
+### Added — Image Upload & Interface Contract (#4)
+- `POST /api/meals/analyze` accepts a `multipart/form-data` `image` and returns the Meal contract `{"items": [{"food_item", "quantity"}]}`, currently a fixed mock (one Banana).
+- Uploads are streamed to `UPLOAD_DIR` (default `./uploads`, `/tmp/uploads` on Lambda) under random names; non-image types get `415`, files over `MAX_UPLOAD_BYTES` (default 5 MB) get `413` and are not kept.
+- Lambda template declares binary media types so image uploads survive API Gateway.
+- Pinned `python-multipart`.
+
 ### Added — Database Setup & Seed Data (#3)
 - SQLite database via SQLAlchemy 2.0, with a `get_db` FastAPI dependency that tests override with an in-memory DB.
 - `food_items` table (FoodItem: name, calories per unit, unit description), seeded on startup with Banana, Apple, Orange, Egg, Bread, Chicken Breast, White Rice and Pizza. Seeding is idempotent.
