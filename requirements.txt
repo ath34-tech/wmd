@@ -4,8 +4,10 @@ mangum==0.17.0
 pydantic==2.9.2
 pydantic-settings==2.2.1
 
-# Database (For later use)
-# sqlalchemy==2.0.30
+# Database
+sqlalchemy==2.0.35
+
+# Postgres (For later use)
 # psycopg2-binary==2.9.9
 
 # AWS / LocalStack SDK (For later use)

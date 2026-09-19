@@ -49,6 +49,22 @@ Once you have the backend running locally (e.g. `uvicorn app.main:app --reload`)
   }
   ```
 
+### 4. List Food Items
+- **Path**: `GET /api/food-items`
+- **Description**: Lists every known FoodItem with its baseline calories for one unit (serving), sorted by name. These are the foods the meal analyzer can price. The database is seeded on startup.
+- **Example**:
+  ```bash
+  curl http://localhost:8000/api/food-items
+  ```
+- **Response**:
+  ```json
+  [
+    { "id": 2, "name": "Apple", "calories_per_unit": 95, "unit": "medium apple" },
+    { "id": 1, "name": "Banana", "calories_per_unit": 105, "unit": "medium banana" }
+  ]
+  ```
+  (truncated; the seed set also includes Bread, Chicken Breast, Egg, Orange, Pizza, White Rice)
+
 ---
 
 ## Planned Endpoints (Architecture based on PRD)

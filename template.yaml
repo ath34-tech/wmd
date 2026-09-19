@@ -9,6 +9,10 @@ Globals:
     Timeout: 30
     MemorySize: 256
     Runtime: python3.11
+    Environment:
+      Variables:
+        # Lambda's filesystem is read-only except /tmp
+        DATABASE_URL: sqlite:////tmp/wmd.db
 
 Resources:
   FitnessApiFunction:

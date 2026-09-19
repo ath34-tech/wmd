@@ -36,3 +36,5 @@ env/
 
 # AWS SAM
 .aws-sam/
+# Local SQLite database
+*.db
