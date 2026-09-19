@@ -67,7 +67,7 @@ Once you have the backend running locally (e.g. `uvicorn app.main:app --reload`)
 
 ### 5. Analyze Meal
 - **Path**: `POST /api/meals/analyze`
-- **Description**: Upload a photo of a Meal; returns the FoodItems identified in it with their quantities. **Currently returns a fixed mock result** (one Banana) while the Gemini integration is built; the response shape is the contract and will gain calorie fields later.
+- **Description**: Upload a photo of a Meal; Gemini (`gemini-3.1-flash-lite`) identifies the FoodItems in it and their quantities. Names match the ones from `GET /api/food-items` when the food is known, with `quantity` in that food's `unit` (fractions allowed). Unknown foods get a generic name. A photo with no food returns `"items": []`. The image is deleted once analysed. The response will gain calorie fields later.
 - **Request**: `multipart/form-data` with one file field named `image`.
   - Allowed types: `image/jpeg`, `image/png`, `image/webp`, `image/heic`, `image/heif`.
   - Max size: 5 MB (configurable via the `MAX_UPLOAD_BYTES` env var).
@@ -80,7 +80,8 @@ Once you have the backend running locally (e.g. `uvicorn app.main:app --reload`)
   ```json
   {
     "items": [
-      { "food_item": "Banana", "quantity": 1.0 }
+      { "food_item": "Banana", "quantity": 1.0 },
+      { "food_item": "Egg", "quantity": 2.0 }
     ]
   }
   ```
@@ -88,6 +89,8 @@ Once you have the backend running locally (e.g. `uvicorn app.main:app --reload`)
   - `413` — image larger than the size limit.
   - `415` — file is not one of the allowed image types.
   - `422` — no `image` field in the form.
+  - `502` — Gemini failed or returned an unreadable answer; safe to retry.
+  - `503` — the server has no Gemini API key configured.
 
 ---
 

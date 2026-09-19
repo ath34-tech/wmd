@@ -4,6 +4,18 @@ All notable backend changes, newest first. API details live in [API_DOCS.md](API
 
 ## [Unreleased]
 
+### Added — LLM Integration (Gemini) (#5)
+- `POST /api/meals/analyze` now sends the image to Gemini (`gemini-3.1-flash-lite`, `google-genai` SDK) with a strict system prompt and a JSON response schema, and returns the identified FoodItems and quantities instead of the mock.
+- The prompt lists the known FoodItems and their units from the DB, so Gemini reuses those names and counts in those units.
+- Errors: Gemini API failure or unreadable output → `502`; no API key configured → `503`.
+- Gemini client is a FastAPI dependency (`get_gemini_client`); tests replace it with a fake.
+- Config: `GEMINI_API_KEY`, `GEMINI_MODEL`; settings now also read a local `.env` (see `.env.example`). Lambda template takes the key as a `NoEcho` parameter.
+- Added [OPEN_ITEMS.md](OPEN_ITEMS.md) to track pending work, review points and unaddressed problems.
+
+### Changed (#5)
+- Uploaded images are deleted after analysis (previously kept forever).
+- `pydantic` 2.9.2 → 2.13.5 and `httpx` 0.27.2 → 0.28.1 (required by `google-genai`); `httpx` moved from dev to runtime requirements.
+
 ### Added — Image Upload & Interface Contract (#4)
 - `POST /api/meals/analyze` accepts a `multipart/form-data` `image` and returns the Meal contract `{"items": [{"food_item", "quantity"}]}`, currently a fixed mock (one Banana).
 - Uploads are streamed to `UPLOAD_DIR` (default `./uploads`, `/tmp/uploads` on Lambda) under random names; non-image types get `415`, files over `MAX_UPLOAD_BYTES` (default 5 MB) get `413` and are not kept.

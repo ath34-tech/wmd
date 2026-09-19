@@ -14,10 +14,11 @@ This backend follows the "BUILD IT" local-first hackathon track:
 
 ## Current Development Progress
 
-1. **Initial Project Setup**: 
-   - Created the AWS SAM `template.yaml`.
-   - Set up the basic FastAPI application structure in `app/`.
-   - Created `docker-compose.yml` for LocalStack and Postgres.
+The MVP backend (spec: issue #1) uses SQLite and Google Gemini for meal photo recognition.
+
+- [CHANGELOG.md](CHANGELOG.md): what has been built, per ticket.
+- [OPEN_ITEMS.md](OPEN_ITEMS.md): known gaps, pending decisions and things needing review.
+- [API_DOCS.md](API_DOCS.md): every endpoint, with cURL examples.
 
 ## Local Development Setup
 
@@ -33,11 +34,12 @@ To run the API locally during development:
    ```bash
    pip install -r requirements.txt
    ```
-3. Start the FastAPI development server:
+3. Configure: copy `.env.example` to `.env` and set `GEMINI_API_KEY` (needed by `POST /api/meals/analyze`; tests don't need it).
+4. Start the FastAPI development server:
    ```bash
    uvicorn app.main:app --reload
    ```
-4. Run the tests:
+5. Run the tests:
    ```bash
    pip install -r requirements-dev.txt
    pytest
