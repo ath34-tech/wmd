@@ -3,6 +3,7 @@ uvicorn==0.29.0
 mangum==0.17.0
 pydantic==2.9.2
 pydantic-settings==2.2.1
+python-multipart==0.0.32
 
 # Database
 sqlalchemy==2.0.35
