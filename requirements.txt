@@ -1,9 +1,13 @@
 fastapi==0.111.0
 uvicorn==0.29.0
 mangum==0.17.0
-pydantic==2.9.2
+pydantic==2.13.5
 pydantic-settings==2.2.1
 python-multipart==0.0.32
+httpx==0.28.1
+
+# LLM (Gemini)
+google-genai==2.24.0
 
 # Database
 sqlalchemy==2.0.35
