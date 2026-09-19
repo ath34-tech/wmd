@@ -1,13 +1,24 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from mangum import Mangum
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import api_router
+from app.db.database import init_db
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+
 
 app = FastAPI(
     title="Personal Fitness Coach API",
     description="Backend API for the local-first fitness companion.",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(

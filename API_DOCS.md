@@ -49,6 +49,49 @@ Once you have the backend running locally (e.g. `uvicorn app.main:app --reload`)
   }
   ```
 
+### 4. List Food Items
+- **Path**: `GET /api/food-items`
+- **Description**: Lists every known FoodItem with its baseline calories for one unit (serving), sorted by name. These are the foods whose calories the meal analyzer can calculate. The database is seeded on startup.
+- **Example**:
+  ```bash
+  curl http://localhost:8000/api/food-items
+  ```
+- **Response**:
+  ```json
+  [
+    { "id": 2, "name": "Apple", "calories_per_unit": 95, "unit": "medium apple" },
+    { "id": 1, "name": "Banana", "calories_per_unit": 105, "unit": "medium banana" }
+  ]
+  ```
+  (truncated; the seed set also includes Bread, Chicken Breast, Egg, Orange, Pizza, White Rice)
+
+### 5. Analyze Meal
+- **Path**: `POST /api/meals/analyze`
+- **Description**: Upload a photo of a Meal; Gemini (`gemini-3.1-flash-lite`) identifies the FoodItems in it and their quantities. Names match the ones from `GET /api/food-items` when the food is known, with `quantity` in that food's `unit` (fractions allowed). Unknown foods get a generic name. A photo with no food returns `"items": []`. The image is deleted once analysed. The response will gain calorie fields later.
+- **Request**: `multipart/form-data` with one file field named `image`.
+  - Allowed types: `image/jpeg`, `image/png`, `image/webp`, `image/heic`, `image/heif`.
+  - Max size: 5 MB (configurable via the `MAX_UPLOAD_BYTES` env var).
+- **Example**:
+  ```bash
+  curl -X POST http://localhost:8000/api/meals/analyze \
+    -F "image=@lunch.jpg;type=image/jpeg"
+  ```
+- **Response** (`200 OK`):
+  ```json
+  {
+    "items": [
+      { "food_item": "Banana", "quantity": 1.0 },
+      { "food_item": "Egg", "quantity": 2.0 }
+    ]
+  }
+  ```
+- **Errors**:
+  - `413` — image larger than the size limit.
+  - `415` — file is not one of the allowed image types.
+  - `422` — no `image` field in the form.
+  - `502` — Gemini failed or returned an unreadable answer; safe to retry.
+  - `503` — the server has no Gemini API key configured.
+
 ---
 
 ## Planned Endpoints (Architecture based on PRD)

@@ -4,11 +4,28 @@ Description: >
   wmd-backend
   SAM Template for Personal Fitness Coach Backend
 
+Parameters:
+  GeminiApiKey:
+    Type: String
+    NoEcho: true
+    Description: Google Gemini API key used for meal image recognition
+
 Globals:
   Function:
     Timeout: 30
     MemorySize: 256
     Runtime: python3.11
+    Environment:
+      Variables:
+        # Lambda's filesystem is read-only except /tmp
+        DATABASE_URL: sqlite:////tmp/wmd.db
+        UPLOAD_DIR: /tmp/uploads
+        GEMINI_API_KEY: !Ref GeminiApiKey
+  Api:
+    # Pass image uploads through API Gateway as binary instead of mangling them
+    BinaryMediaTypes:
+      - multipart~1form-data
+      - image~1*
 
 Resources:
   FitnessApiFunction:
