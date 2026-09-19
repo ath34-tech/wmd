@@ -8,6 +8,7 @@ from app.db.database import get_db
 from app.db.models import FoodItem
 from app.services.food_recognition import get_gemini_client, identify_foods
 from app.services.image_storage import save_upload
+from app.services.nutrition import calculate_calories, sum_calories
 
 router = APIRouter(prefix="/meals", tags=["meals"])
 
@@ -15,10 +16,12 @@ router = APIRouter(prefix="/meals", tags=["meals"])
 class MealItem(BaseModel):
     food_item: str
     quantity: float
+    calories: int | None
 
 
 class MealAnalysis(BaseModel):
     items: list[MealItem]
+    total_calories: int
 
 
 @router.post("/analyze", response_model=MealAnalysis)
@@ -35,6 +38,15 @@ async def analyze_meal(
         )
     finally:
         path.unlink()  # the upload dir is scratch space, not an archive
+    meal = calculate_calories(foods, known_foods)
     return MealAnalysis(
-        items=[MealItem(food_item=f.food_item, quantity=f.quantity) for f in foods]
+        items=[
+            MealItem(
+                food_item=food.food_item,
+                quantity=food.quantity,
+                calories=food.calories,
+            )
+            for food in meal
+        ],
+        total_calories=sum_calories(meal),
     )

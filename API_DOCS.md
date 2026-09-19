@@ -17,6 +17,10 @@ Once you have the backend running locally (e.g. `uvicorn app.main:app --reload`)
 ### 1. Root
 - **Path**: `GET /`
 - **Description**: Verifies the API is reachable.
+- **Example**:
+  ```bash
+  curl http://localhost:8000/
+  ```
 - **Response**:
   ```json
   {
@@ -27,6 +31,10 @@ Once you have the backend running locally (e.g. `uvicorn app.main:app --reload`)
 ### 2. Health Check
 - **Path**: `GET /health`
 - **Description**: Checks the health status of the API.
+- **Example**:
+  ```bash
+  curl http://localhost:8000/health
+  ```
 - **Response**:
   ```json
   {
@@ -67,7 +75,13 @@ Once you have the backend running locally (e.g. `uvicorn app.main:app --reload`)
 
 ### 5. Analyze Meal
 - **Path**: `POST /api/meals/analyze`
-- **Description**: Upload a photo of a Meal; Gemini (`gemini-3.1-flash-lite`) identifies the FoodItems in it and their quantities. Names match the ones from `GET /api/food-items` when the food is known, with `quantity` in that food's `unit` (fractions allowed). Unknown foods get a generic name. A photo with no food returns `"items": []`. The image is deleted once analysed. The response will gain calorie fields later.
+- **Description**: Upload a photo of a Meal and get back its FoodItems, quantities and total calories. Gemini (`gemini-3.1-flash-lite`) only identifies *what* is on the plate; calories come from the `food_items` table, never from the LLM.
+- **How the numbers work**:
+  - `quantity` is in the FoodItem's `unit` from `GET /api/food-items` (fractions allowed), and `calories` is `calories_per_unit × quantity`, rounded half up (so half a 105 kcal banana is 53). `total_calories` adds up the rounded per-item values.
+  - Foods not in the database are still listed, with `calories: null`, and are **excluded** from `total_calories`.
+  - A food recognised twice is merged into one item with the quantities added; names are matched ignoring case and surrounding spaces.
+  - Items with a quantity of zero or less are dropped. A photo with no food gives `"items": []` and `"total_calories": 0`.
+  - The uploaded image is deleted once analysed.
 - **Request**: `multipart/form-data` with one file field named `image`.
   - Allowed types: `image/jpeg`, `image/png`, `image/webp`, `image/heic`, `image/heif`.
   - Max size: 5 MB (configurable via the `MAX_UPLOAD_BYTES` env var).
@@ -80,9 +94,11 @@ Once you have the backend running locally (e.g. `uvicorn app.main:app --reload`)
   ```json
   {
     "items": [
-      { "food_item": "Banana", "quantity": 1.0 },
-      { "food_item": "Egg", "quantity": 2.0 }
-    ]
+      { "food_item": "Banana", "quantity": 1.0, "calories": 105 },
+      { "food_item": "Egg", "quantity": 2.0, "calories": 156 },
+      { "food_item": "Pasta", "quantity": 1.0, "calories": null }
+    ],
+    "total_calories": 261
   }
   ```
 - **Errors**:
