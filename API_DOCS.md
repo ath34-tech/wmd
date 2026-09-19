@@ -34,6 +34,21 @@ Once you have the backend running locally (e.g. `uvicorn app.main:app --reload`)
   }
   ```
 
+### 3. Mock Login
+- **Path**: `POST /api/auth/mock-login`
+- **Description**: MockAuth for the MVP. Returns a static dummy token so the frontend can connect without a registration/login flow. No request body is required.
+- **Example**:
+  ```bash
+  curl -X POST http://localhost:8000/api/auth/mock-login
+  ```
+- **Response**:
+  ```json
+  {
+    "access_token": "mock-token-wmd-mvp",
+    "token_type": "bearer"
+  }
+  ```
+
 ---
 
 ## Planned Endpoints (Architecture based on PRD)
