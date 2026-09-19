@@ -1,0 +1,38 @@
+Fitness_Coach_PRD_Feature_Requirements_FINAL-2.pdf
+Personal_Fitness_Coach_User_Personas.pdf
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+
+# AWS SAM
+.aws-sam/
