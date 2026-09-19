@@ -2,7 +2,7 @@
 
 Pending work, things needing review, and known problems not yet addressed. Updated with every ticket; tick an item and note where it was resolved rather than deleting it. What *was* built is in [CHANGELOG.md](CHANGELOG.md).
 
-Last updated: 2026-09-20 (after #5).
+Last updated: 2026-09-20 (after #6 — the last MVP ticket).
 
 ## Needs a decision
 
@@ -38,12 +38,18 @@ Last updated: 2026-09-20 (after #5).
 - [x] ~~Network failures (timeouts, connection errors) returned 500 instead of 502.~~ Resolved in #5 review: `httpx` errors now map to 502.
 - [ ] **The missing-API-key test never failed first.** The 503 check was written before its test, so the test documents the behaviour rather than having driven it.
 
+### Nutrition (#6)
+- [ ] **Name matching is exact apart from case and spacing.** "Bananas", "banana bread" or a Spanish name won't match "Banana" and will come back with `calories: null`. Plurals, synonyms or fuzzy matching would need a decision (and probably more seed data).
+- [ ] **`total_calories` adds up rounded per-item values**, so it can differ by a calorie or two from the unrounded total. Documented in API_DOCS.md; fine for the MVP.
+- [ ] **Accuracy is unmeasured end to end.** Because no live Gemini call has run, nothing shows whether Gemini's quantities in our units produce sensible calorie totals for real photos. This is the main thing to check before a demo.
+
 ### Tooling (#2)
 - [ ] **No typechecker or linter configured** (e.g. mypy/pyright, ruff). Checks so far are compile-only plus tests.
 - [ ] **Deprecation warnings in the test run** come from FastAPI 0.111 / Starlette 0.37 (`python_multipart` import, `anyio` `BlockingPortal`). Upgrading FastAPI would clear them.
 
 ### Minor (judgement calls from code reviews)
 - [ ] `FoodItem.unit` holds a serving description (e.g. "medium banana"); a name like `serving` might read better. (#3)
-- [ ] `tests/test_meals.py` repeats the upload call in every test (now 9 times); a small helper would tidy it. (#4, #5)
-- [ ] `food_item` fields (`MealItem`, `IdentifiedFood`) hold a food *name*, not a FoodItem; `food_name` would be more precise, but it is part of the published API contract now. The service's `IdentifiedFood`/`FoodIdentification` mirror `MealItem`/`MealAnalysis` and are copied field by field; kept separate so #6 can add calories to the response only. (#5)
+- [x] ~~`tests/test_meals.py` repeats the upload call in every test.~~ Done in #6: `analyze()` helper in the test module.
+- [ ] `food_item` fields (`MealItem`, `IdentifiedFood`, `MealFood`) hold a food *name*, not a FoodItem; `food_name` would be more precise, but it is part of the published API contract now. (#5, #6)
+- [ ] **Three types now mirror the same shape**: `IdentifiedFood` (what Gemini said), `MealFood` (with calories) and `MealItem` (the API response), copied field by field in the endpoint. Each layer owning its own type is defensible, but if they stay identical, collapse them. (#6)
 - [ ] Response models `MealAnalysis` / `MealItem` don't follow the `...Response` suffix used by `TokenResponse` / `FoodItemResponse`. (#4)

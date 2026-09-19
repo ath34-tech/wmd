@@ -17,6 +17,10 @@ Once you have the backend running locally (e.g. `uvicorn app.main:app --reload`)
 ### 1. Root
 - **Path**: `GET /`
 - **Description**: Verifies the API is reachable.
+- **Example**:
+  ```bash
+  curl http://localhost:8000/
+  ```
 - **Response**:
   ```json
   {
@@ -27,6 +31,10 @@ Once you have the backend running locally (e.g. `uvicorn app.main:app --reload`)
 ### 2. Health Check
 - **Path**: `GET /health`
 - **Description**: Checks the health status of the API.
+- **Example**:
+  ```bash
+  curl http://localhost:8000/health
+  ```
 - **Response**:
   ```json
   {
@@ -69,7 +77,7 @@ Once you have the backend running locally (e.g. `uvicorn app.main:app --reload`)
 - **Path**: `POST /api/meals/analyze`
 - **Description**: Upload a photo of a Meal and get back its FoodItems, quantities and total calories. Gemini (`gemini-3.1-flash-lite`) only identifies *what* is on the plate; calories come from the `food_items` table, never from the LLM.
 - **How the numbers work**:
-  - `quantity` is in the FoodItem's `unit` from `GET /api/food-items` (fractions allowed), and `calories` is `calories_per_unit × quantity`, rounded.
+  - `quantity` is in the FoodItem's `unit` from `GET /api/food-items` (fractions allowed), and `calories` is `calories_per_unit × quantity`, rounded half up (so half a 105 kcal banana is 53). `total_calories` adds up the rounded per-item values.
   - Foods not in the database are still listed, with `calories: null`, and are **excluded** from `total_calories`.
   - A food recognised twice is merged into one item with the quantities added; names are matched ignoring case and surrounding spaces.
   - Items with a quantity of zero or less are dropped. A photo with no food gives `"items": []` and `"total_calories": 0`.

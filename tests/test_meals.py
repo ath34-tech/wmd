@@ -8,6 +8,14 @@ from app.services.food_recognition import get_gemini_client
 PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"\x00" * 64
 
 
+def analyze(client, content=PNG_BYTES, filename="lunch.png", content_type="image/png"):
+    """Upload an image to the analyze endpoint."""
+    return client.post(
+        "/api/meals/analyze",
+        files={"image": (filename, content, content_type)},
+    )
+
+
 def test_analyze_returns_food_items_identified_by_gemini(client, gemini):
     gemini.reply = {
         "items": [
@@ -16,10 +24,7 @@ def test_analyze_returns_food_items_identified_by_gemini(client, gemini):
         ]
     }
 
-    response = client.post(
-        "/api/meals/analyze",
-        files={"image": ("lunch.png", PNG_BYTES, "image/png")},
-    )
+    response = analyze(client)
 
     assert response.status_code == 200
     assert [item["food_item"] for item in response.json()["items"]] == ["Apple", "Egg"]
@@ -27,10 +32,7 @@ def test_analyze_returns_food_items_identified_by_gemini(client, gemini):
 
 
 def test_analyze_sends_uploaded_image_to_gemini(client, gemini):
-    client.post(
-        "/api/meals/analyze",
-        files={"image": ("lunch.png", PNG_BYTES, "image/png")},
-    )
+    analyze(client)
 
     [call] = gemini.calls
     [image_part] = call["contents"]
@@ -40,19 +42,15 @@ def test_analyze_sends_uploaded_image_to_gemini(client, gemini):
 
 
 def test_analyze_does_not_keep_uploaded_image(client, upload_dir):
-    response = client.post(
-        "/api/meals/analyze",
-        files={"image": ("lunch.png", PNG_BYTES, "image/png")},
-    )
+    response = analyze(client)
 
     assert response.status_code == 200
     assert not any(upload_dir.iterdir())
 
 
 def test_analyze_rejects_non_image_upload(client, upload_dir):
-    response = client.post(
-        "/api/meals/analyze",
-        files={"image": ("notes.txt", b"not an image", "text/plain")},
+    response = analyze(
+        client, content=b"not an image", filename="notes.txt", content_type="text/plain"
     )
 
     assert response.status_code == 415
@@ -61,24 +59,19 @@ def test_analyze_rejects_non_image_upload(client, upload_dir):
 
 def test_analyze_rejects_image_over_size_limit(client, upload_dir, monkeypatch):
     monkeypatch.setattr(settings, "max_upload_bytes", 1024)
-    too_big = PNG_BYTES + b"\x00" * 1024
 
-    response = client.post(
-        "/api/meals/analyze",
-        files={"image": ("huge.png", too_big, "image/png")},
-    )
+    response = analyze(client, content=PNG_BYTES + b"\x00" * 1024, filename="huge.png")
 
     assert response.status_code == 413
     assert not upload_dir.exists() or not any(upload_dir.iterdir())
 
 
-def test_analyze_returns_502_when_gemini_reply_is_not_valid_json(client, gemini, upload_dir):
+def test_analyze_returns_502_when_gemini_reply_is_not_valid_json(
+    client, gemini, upload_dir
+):
     gemini.raw_reply = "Sorry, I can't help with that."
 
-    response = client.post(
-        "/api/meals/analyze",
-        files={"image": ("lunch.png", PNG_BYTES, "image/png")},
-    )
+    response = analyze(client)
 
     assert response.status_code == 502
     assert not any(upload_dir.iterdir())
@@ -89,10 +82,16 @@ def test_analyze_returns_502_when_gemini_call_fails(client, gemini, upload_dir):
         503, {"error": {"code": 503, "message": "overloaded", "status": "UNAVAILABLE"}}
     )
 
-    response = client.post(
-        "/api/meals/analyze",
-        files={"image": ("lunch.png", PNG_BYTES, "image/png")},
-    )
+    response = analyze(client)
+
+    assert response.status_code == 502
+    assert not any(upload_dir.iterdir())
+
+
+def test_analyze_returns_502_when_gemini_is_unreachable(client, gemini, upload_dir):
+    gemini.error = httpx.ConnectTimeout("timed out")
+
+    response = analyze(client)
 
     assert response.status_code == 502
     assert not any(upload_dir.iterdir())
@@ -102,24 +101,9 @@ def test_analyze_returns_503_when_gemini_api_key_is_missing(client, monkeypatch)
     monkeypatch.setattr(settings, "gemini_api_key", None)
     app.dependency_overrides.pop(get_gemini_client)
 
-    response = client.post(
-        "/api/meals/analyze",
-        files={"image": ("lunch.png", PNG_BYTES, "image/png")},
-    )
+    response = analyze(client)
 
     assert response.status_code == 503
-
-
-def test_analyze_returns_502_when_gemini_is_unreachable(client, gemini, upload_dir):
-    gemini.error = httpx.ConnectTimeout("timed out")
-
-    response = client.post(
-        "/api/meals/analyze",
-        files={"image": ("lunch.png", PNG_BYTES, "image/png")},
-    )
-
-    assert response.status_code == 502
-    assert not any(upload_dir.iterdir())
 
 
 def test_analyze_prices_known_foods_and_totals_the_meal(client, gemini):
@@ -130,10 +114,7 @@ def test_analyze_prices_known_foods_and_totals_the_meal(client, gemini):
         ]
     }
 
-    response = client.post(
-        "/api/meals/analyze",
-        files={"image": ("lunch.png", PNG_BYTES, "image/png")},
-    )
+    response = analyze(client)
 
     assert response.status_code == 200
     # Seeded baselines: Banana 105/medium banana, Apple 95/medium apple.
@@ -154,10 +135,7 @@ def test_analyze_lists_unknown_foods_without_calories(client, gemini):
         ]
     }
 
-    response = client.post(
-        "/api/meals/analyze",
-        files={"image": ("lunch.png", PNG_BYTES, "image/png")},
-    )
+    response = analyze(client)
 
     assert response.json() == {
         "items": [
@@ -176,10 +154,7 @@ def test_analyze_merges_repeated_foods_and_ignores_name_case(client, gemini):
         ]
     }
 
-    response = client.post(
-        "/api/meals/analyze",
-        files={"image": ("lunch.png", PNG_BYTES, "image/png")},
-    )
+    response = analyze(client)
 
     # Seeded baseline: Egg 78/large boiled egg, so 3 eggs is 234.
     assert response.json() == {
@@ -197,12 +172,29 @@ def test_analyze_drops_foods_with_no_quantity(client, gemini):
         ]
     }
 
-    response = client.post(
-        "/api/meals/analyze",
-        files={"image": ("lunch.png", PNG_BYTES, "image/png")},
-    )
+    response = analyze(client)
 
     assert response.json() == {
         "items": [{"food_item": "Banana", "quantity": 1, "calories": 105}],
         "total_calories": 105,
     }
+
+
+def test_analyze_rounds_half_portions_up(client, gemini):
+    gemini.reply = {"items": [{"food_item": "Banana", "quantity": 0.5}]}
+
+    response = analyze(client)
+
+    # Half a 105 kcal banana is 52.5, reported as 53 rather than 52.
+    assert response.json() == {
+        "items": [{"food_item": "Banana", "quantity": 0.5, "calories": 53}],
+        "total_calories": 53,
+    }
+
+
+def test_analyze_returns_empty_meal_when_no_food_is_recognised(client, gemini):
+    gemini.reply = {"items": []}
+
+    response = analyze(client)
+
+    assert response.json() == {"items": [], "total_calories": 0}
