@@ -18,6 +18,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(api_router)
+
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the Personal Fitness Coach API"}
@@ -25,8 +27,6 @@ def read_root():
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
-
-app.include_router(api_router)
 
 # Mangum wrapper for AWS Lambda execution
 handler = Mangum(app)
