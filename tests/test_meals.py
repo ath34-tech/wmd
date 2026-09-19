@@ -22,12 +22,8 @@ def test_analyze_returns_food_items_identified_by_gemini(client, gemini):
     )
 
     assert response.status_code == 200
-    assert response.json() == {
-        "items": [
-            {"food_item": "Apple", "quantity": 2},
-            {"food_item": "Egg", "quantity": 1.5},
-        ]
-    }
+    assert [item["food_item"] for item in response.json()["items"]] == ["Apple", "Egg"]
+    assert [item["quantity"] for item in response.json()["items"]] == [2, 1.5]
 
 
 def test_analyze_sends_uploaded_image_to_gemini(client, gemini):
@@ -124,3 +120,89 @@ def test_analyze_returns_502_when_gemini_is_unreachable(client, gemini, upload_d
 
     assert response.status_code == 502
     assert not any(upload_dir.iterdir())
+
+
+def test_analyze_prices_known_foods_and_totals_the_meal(client, gemini):
+    gemini.reply = {
+        "items": [
+            {"food_item": "Banana", "quantity": 1},
+            {"food_item": "Apple", "quantity": 2},
+        ]
+    }
+
+    response = client.post(
+        "/api/meals/analyze",
+        files={"image": ("lunch.png", PNG_BYTES, "image/png")},
+    )
+
+    assert response.status_code == 200
+    # Seeded baselines: Banana 105/medium banana, Apple 95/medium apple.
+    assert response.json() == {
+        "items": [
+            {"food_item": "Banana", "quantity": 1, "calories": 105},
+            {"food_item": "Apple", "quantity": 2, "calories": 190},
+        ],
+        "total_calories": 295,
+    }
+
+
+def test_analyze_lists_unknown_foods_without_calories(client, gemini):
+    gemini.reply = {
+        "items": [
+            {"food_item": "Banana", "quantity": 1},
+            {"food_item": "Pasta", "quantity": 1},
+        ]
+    }
+
+    response = client.post(
+        "/api/meals/analyze",
+        files={"image": ("lunch.png", PNG_BYTES, "image/png")},
+    )
+
+    assert response.json() == {
+        "items": [
+            {"food_item": "Banana", "quantity": 1, "calories": 105},
+            {"food_item": "Pasta", "quantity": 1, "calories": None},
+        ],
+        "total_calories": 105,
+    }
+
+
+def test_analyze_merges_repeated_foods_and_ignores_name_case(client, gemini):
+    gemini.reply = {
+        "items": [
+            {"food_item": "egg", "quantity": 1},
+            {"food_item": " EGG ", "quantity": 2},
+        ]
+    }
+
+    response = client.post(
+        "/api/meals/analyze",
+        files={"image": ("lunch.png", PNG_BYTES, "image/png")},
+    )
+
+    # Seeded baseline: Egg 78/large boiled egg, so 3 eggs is 234.
+    assert response.json() == {
+        "items": [{"food_item": "Egg", "quantity": 3, "calories": 234}],
+        "total_calories": 234,
+    }
+
+
+def test_analyze_drops_foods_with_no_quantity(client, gemini):
+    gemini.reply = {
+        "items": [
+            {"food_item": "Banana", "quantity": 1},
+            {"food_item": "Apple", "quantity": 0},
+            {"food_item": "Pizza", "quantity": -2},
+        ]
+    }
+
+    response = client.post(
+        "/api/meals/analyze",
+        files={"image": ("lunch.png", PNG_BYTES, "image/png")},
+    )
+
+    assert response.json() == {
+        "items": [{"food_item": "Banana", "quantity": 1, "calories": 105}],
+        "total_calories": 105,
+    }

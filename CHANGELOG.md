@@ -6,6 +6,12 @@ All notable backend changes, newest first. API details live in [API_DOCS.md](API
 
 `feature/backend-mvp` (tickets #2–#5) merged into `main` on 2026-09-20.
 
+### Added — Final Nutrition Calculation (#6)
+- `POST /api/meals/analyze` now returns `calories` per item and `total_calories` for the Meal, looked up from the `food_items` table (never from the LLM) as `calories_per_unit × quantity`, rounded.
+- Foods with no FoodItem baseline are listed with `calories: null` and excluded from the total.
+- Food names are matched ignoring case and surrounding spaces; a food identified more than once is merged into a single item with the quantities added; items with a quantity of zero or less are dropped.
+- The FoodItem list already loaded for the Gemini prompt is reused for the lookup, so analysis still costs one DB query.
+
 ### Added — LLM Integration (Gemini) (#5)
 - `POST /api/meals/analyze` now sends the image to Gemini (`gemini-3.1-flash-lite`, `google-genai` SDK) with a strict system prompt and a JSON response schema, and returns the identified FoodItems and quantities instead of the mock.
 - The prompt lists the known FoodItems and their units from the DB, so Gemini reuses those names and counts in those units.
