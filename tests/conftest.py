@@ -10,7 +10,11 @@ from app.main import app
 
 @pytest.fixture
 def client():
-    """TestClient backed by an isolated, seeded in-memory SQLite database."""
+    """TestClient backed by an isolated, seeded in-memory SQLite database.
+
+    Not used as a context manager, so the app lifespan (which initialises the
+    real file DB) does not run.
+    """
     engine = create_engine(
         "sqlite:///:memory:",
         connect_args={"check_same_thread": False},
