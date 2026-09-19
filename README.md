@@ -37,6 +37,11 @@ To run the API locally during development:
    ```bash
    uvicorn app.main:app --reload
    ```
+4. Run the tests:
+   ```bash
+   pip install -r requirements-dev.txt
+   pytest
+   ```
 
 To run the local infrastructure (PostgreSQL, OpenSearch, etc.):
 ```bash

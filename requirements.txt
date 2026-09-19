@@ -1,7 +1,7 @@
 fastapi==0.111.0
 uvicorn==0.29.0
 mangum==0.17.0
-pydantic==2.7.1
+pydantic==2.9.2
 pydantic-settings==2.2.1
 
 # Database (For later use)
