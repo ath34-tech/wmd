@@ -6,7 +6,7 @@ from fastapi import HTTPException, UploadFile, status
 from app.core.config import settings
 
 # Image types Gemini accepts, mapped to the extension we save them with.
-EXTENSIONS = {
+ALLOWED_IMAGE_TYPES = {
     "image/jpeg": ".jpg",
     "image/png": ".png",
     "image/webp": ".webp",
@@ -18,26 +18,27 @@ CHUNK_BYTES = 64 * 1024
 
 async def save_upload(image: UploadFile) -> Path:
     """Save an uploaded image under a random name in the upload dir."""
-    if image.content_type not in EXTENSIONS:
+    if image.content_type not in ALLOWED_IMAGE_TYPES:
         raise HTTPException(
             status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            f"Unsupported image type; use one of: {', '.join(EXTENSIONS)}",
+            f"Unsupported image type; use one of: {', '.join(ALLOWED_IMAGE_TYPES)}",
         )
     upload_dir = Path(settings.upload_dir)
     upload_dir.mkdir(parents=True, exist_ok=True)
-    path = upload_dir / f"{uuid.uuid4().hex}{EXTENSIONS[image.content_type]}"
+    path = upload_dir / f"{uuid.uuid4().hex}{ALLOWED_IMAGE_TYPES[image.content_type]}"
 
     size = 0
-    with path.open("wb") as out:
-        while chunk := await image.read(CHUNK_BYTES):
-            size += len(chunk)
-            if size > settings.max_upload_bytes:
-                break
-            out.write(chunk)
-    if size > settings.max_upload_bytes:
+    try:
+        with path.open("wb") as out:
+            while chunk := await image.read(CHUNK_BYTES):
+                size += len(chunk)
+                if size > settings.max_upload_bytes:
+                    raise HTTPException(
+                        status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                        f"Image exceeds {settings.max_upload_bytes} bytes",
+                    )
+                out.write(chunk)
+    except HTTPException:
         path.unlink()
-        raise HTTPException(
-            status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            f"Image exceeds {settings.max_upload_bytes} bytes",
-        )
+        raise
     return path
