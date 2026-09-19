@@ -7,7 +7,7 @@ All notable backend changes, newest first. API details live in [API_DOCS.md](API
 ### Added — LLM Integration (Gemini) (#5)
 - `POST /api/meals/analyze` now sends the image to Gemini (`gemini-3.1-flash-lite`, `google-genai` SDK) with a strict system prompt and a JSON response schema, and returns the identified FoodItems and quantities instead of the mock.
 - The prompt lists the known FoodItems and their units from the DB, so Gemini reuses those names and counts in those units.
-- Errors: Gemini API failure or unreadable output → `502`; no API key configured → `503`.
+- Errors: Gemini API failure, network failure/timeout or unreadable output → `502`; no API key configured → `503`.
 - Gemini client is a FastAPI dependency (`get_gemini_client`); tests replace it with a fake.
 - Config: `GEMINI_API_KEY`, `GEMINI_MODEL`; settings now also read a local `.env` (see `.env.example`). Lambda template takes the key as a `NoEcho` parameter.
 - Added [OPEN_ITEMS.md](OPEN_ITEMS.md) to track pending work, review points and unaddressed problems.

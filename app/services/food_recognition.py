@@ -1,6 +1,7 @@
 import logging
 from functools import lru_cache
 
+import httpx
 from fastapi import HTTPException, status
 from google import genai
 from google.genai import errors, types
@@ -21,7 +22,7 @@ class FoodIdentification(BaseModel):
     items: list[IdentifiedFood]
 
 
-SYSTEM_PROMPT = """\
+SYSTEM_PROMPT_TEMPLATE = """\
 You identify the foods in a photo of a meal for a calorie tracker.
 Return every distinct food you can see with its quantity.
 Rules:
@@ -58,7 +59,7 @@ async def identify_foods(
     known_foods: list[FoodItem],
 ) -> list[IdentifiedFood]:
     """Ask Gemini which foods, and how many of each, are in the image."""
-    prompt = SYSTEM_PROMPT.format(
+    prompt = SYSTEM_PROMPT_TEMPLATE.format(
         known_foods="\n".join(f"- {food.name}: {food.unit}" for food in known_foods)
     )
     try:
@@ -71,7 +72,7 @@ async def identify_foods(
                 response_schema=FoodIdentification,
             ),
         )
-    except errors.APIError as exc:
+    except (errors.APIError, httpx.HTTPError) as exc:
         logger.warning("Gemini call failed: %s", exc)
         raise HTTPException(
             status.HTTP_502_BAD_GATEWAY, "Food recognition is unavailable right now"

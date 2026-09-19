@@ -1,3 +1,4 @@
+import httpx
 from google.genai import errors
 
 from app.core.config import settings
@@ -111,3 +112,15 @@ def test_analyze_returns_503_when_gemini_api_key_is_missing(client, monkeypatch)
     )
 
     assert response.status_code == 503
+
+
+def test_analyze_returns_502_when_gemini_is_unreachable(client, gemini, upload_dir):
+    gemini.error = httpx.ConnectTimeout("timed out")
+
+    response = client.post(
+        "/api/meals/analyze",
+        files={"image": ("lunch.png", PNG_BYTES, "image/png")},
+    )
+
+    assert response.status_code == 502
+    assert not any(upload_dir.iterdir())
