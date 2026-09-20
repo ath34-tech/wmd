@@ -42,3 +42,11 @@ env/
 
 # Uploaded meal images
 uploads/
+
+# Agent tooling (kept locally, not published)
+.agents/
+.claude/
+.zcode/
+skills-lock.json
+CLAUDE.md
+docs/agents/
